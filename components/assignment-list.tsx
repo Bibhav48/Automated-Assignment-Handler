@@ -28,43 +28,51 @@ export function AssignmentList() {
   );
   const onRefresh = () => {
     setIsLoading(true);
-    setIsLoading(true);
     if (refreshTimeout) {
       clearTimeout(refreshTimeout);
     }
     setRefreshTimeout(
       setTimeout(() => {
         setIsLoading(false);
-        setIsLoading(false);
-      }, 2000)
+      }, 1000)
     );
   };
+
+  useGSAP(() => {
+    if (assignments.length > 0) {
+      const tl = gsap.timeline({
+        defaults: { ease: "power2.out" }
+      });
+
+      tl.from(".assignment-item", {
+        y: 30,
+        opacity: 0,
+        duration: 0.4,
+        stagger: 0.1
+      });
+    }
+  }, [assignments]);
 
   // fetch assignments from the database using api
   useEffect(() => {
     const fetchAssignments = async () => {
-      const response = await fetch("/api/assignments");
-      if (!response.ok) {
+      try {
+        const response = await fetch("/api/assignments");
+        if (!response.ok) {
+          setIsError(true);
+          return;
+        }
+        const data = await response.json();
+        setAssignments(data);
+      } catch (error) {
         setIsError(true);
-        return;
+      } finally {
+        setIsLoading(false);
       }
-      const data = await response.json();
-      setAssignments(data);
-      setIsLoading(false);
     };
 
     fetchAssignments();
   }, []);
-  useGSAP(() => {
-    gsap.from(".assignment-item", {
-      y: 20,
-      opacity: 0,
-      stagger: 0.05,
-      duration: 0.4,
-      ease: "power2.out",
-      delay: 0.2,
-    });
-  }, [assignments]);
 
   const filteredAssignments = assignments.filter(
     (assignment) =>
