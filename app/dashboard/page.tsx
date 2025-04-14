@@ -1,0 +1,51 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { RecentLogs } from "@/components/recent-logs"
+import { ManualRun } from "@/components/manual-run"
+import { neon } from "@neondatabase/serverless"
+
+// Initialize the database client
+const sql = neon(process.env.DATABASE_URL!)
+
+export default async function DashboardPage() {
+  // Get counts from database
+  const [assignmentStats] = await sql`
+    SELECT 
+      (SELECT COUNT(*) FROM "Log" WHERE type = 'assignment_completed') as completed_count,
+      (SELECT COUNT(*) FROM "Log" WHERE type = 'assignment_error') as error_count,
+      (SELECT COUNT(*) FROM "ScheduledRun") as runs_count
+  `
+
+  return (
+    <div className="space-y-8">
+      <h1 className="text-3xl font-bold">Dashboard</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Completed Assignments</CardTitle>
+            <CardDescription>Successfully processed</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold">{assignmentStats?.completed_count || 0}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Failed Assignments</CardTitle>
+            <CardDescription>Errors during processing</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold">{assignmentStats?.error_count || 0}</div>
+          </CardContent>
+        </Card>
+
+        <ManualRun />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        <RecentLogs />
+      </div>
+    </div>
+  )
+}
