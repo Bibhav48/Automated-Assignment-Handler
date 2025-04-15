@@ -16,7 +16,7 @@ export async function fetchIncompleteAssignments(): Promise<Assignment[]> {
 
     // Fetch courses
     const coursesResponse = await fetch(
-      `${apiUrl}/courses?enrollment_state=active`,
+      `${apiUrl}/users/self/favourites`,
       {
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -48,6 +48,9 @@ export async function fetchIncompleteAssignments(): Promise<Assignment[]> {
       }
 
       const assignments = await assignmentsResponse.json();
+      for (const item of assignments) {
+        console.log(item);
+      }
 
       return assignments.map((item: any) => ({
         id: item.id,

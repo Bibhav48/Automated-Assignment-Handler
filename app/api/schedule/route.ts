@@ -11,17 +11,23 @@ export async function GET() {
       return NextResponse.json({ error: "Canvas API token not found" }, { status: 404 })
     }
 
-    // Use the existing CanvasApiClient to fetch incomplete assignments
     const canvasClient = new CanvasApiClient(session.apiKey)
     const incompleteAssignments = await canvasClient.getIncompleteAssignments()
 
-    // Format the assignments for the schedule component
-    const schedule = incompleteAssignments.map(assignment => ({
-      id: assignment.id,
-      title: assignment.title,
-      dueDate: assignment.dueDate ? assignment.dueDate.toISOString() : null,
-      courseName: assignment.courseName
-    }))
+    // Filter out assignments without due dates and map to schedule format
+    const schedule = incompleteAssignments
+      .filter(assignment => assignment.dueDate !== null)
+      .map(assignment => ({
+        id: assignment.id,
+        name: assignment.title,
+        course_name: assignment.courseName || 'Unknown Course',
+        due_date: assignment.dueDate?.toISOString(),
+        points_possible: assignment.points
+      }))
+      // log the schedule items
+      for (const item of schedule) {
+        console.log(item)
+      }
 
     return NextResponse.json(schedule)
   } catch (error) {

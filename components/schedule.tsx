@@ -6,9 +6,10 @@ import { Calendar } from "lucide-react"
 
 interface ScheduleItem {
   id: string
-  title: string
-  dueDate: string
-  courseName: string
+  name: string
+  course_name: string
+  due_date: string
+  points_possible: number
 }
 
 export function Schedule() {
@@ -20,6 +21,7 @@ export function Schedule() {
       try {
         const response = await fetch("/api/schedule")
         const data = await response.json()
+        console.log(data)
         setSchedule(data)
       } catch (error) {
         console.error("Error fetching schedule:", error)
@@ -67,9 +69,9 @@ export function Schedule() {
               <div key={item.id} className="flex items-center space-x-4">
                 <Calendar className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <p className="font-medium">{item.title}</p>
+                  <p className="font-medium">{item.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {item.courseName} • Due {new Date(item.dueDate).toLocaleDateString()}
+                    {item.course_name} • Due {new Date(item.due_date).toLocaleDateString()}
                   </p>
                 </div>
               </div>
