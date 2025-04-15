@@ -1,9 +1,10 @@
+"use client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
 interface Settings {
   canvasApiKey: string
@@ -21,42 +22,15 @@ export default function SettingsPage() {
     notificationEmail: "",
     maxRetries: 3,
   })
-  const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-
-  useEffect(() => {
-    fetchSettings()
-  }, [])
-
-  const fetchSettings = async () => {
-    setIsLoading(true)
-    try {
-      const response = await fetch("/api/settings")
-      if (!response.ok) {
-        throw new Error("Failed to fetch settings")
-      }
-      const data = await response.json()
-      setSettings(data)
-    } catch (error) {
-      console.error("Error fetching settings:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const saveSettings = async () => {
     setIsSaving(true)
     try {
-      const response = await fetch("/api/settings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(settings),
-      })
-      if (!response.ok) {
-        throw new Error("Failed to save settings")
-      }
+      // TODO: Implement settings API in the future
+      console.log("Settings would be saved here:", settings)
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
     } catch (error) {
       console.error("Error saving settings:", error)
     } finally {

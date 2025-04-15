@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { neon } from "@neondatabase/serverless";
+import { SessionStrategy } from "next-auth";
 
 // Initialize the database client
 const sql = neon(process.env.DATABASE_URL!);
@@ -11,12 +12,37 @@ export const authOptions = {
       name: "Canvas",
       credentials: {
         apiKey: { label: "Canvas API Key", type: "password" },
+        userType: { label: "User Type", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.apiKey) {
           return null;
         }
 
+        // Handle log users
+        if (credentials.userType === "log") {
+          // For log users, we just need to verify the API key matches our stored one
+          const logUsers = await sql`
+            SELECT * FROM "User" 
+            WHERE "canvasToken" = ${credentials.apiKey} 
+            AND "userType" = 'log'
+          `;
+
+          if (logUsers.length === 0) {
+            return null;
+          }
+
+          const user = logUsers[0];
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            userType: "log",
+          };
+        }
+
+        // Handle Canvas users
         try {
           // Validate the API key by making a request to Canvas API
           const apiUrl = process.env.CANVAS_API_URL;
@@ -56,12 +82,13 @@ export const authOptions = {
           if (existingUsers.length === 0) {
             // Create new user
             await sql`
-              INSERT INTO "User" (id, name, email, "canvasToken", "createdAt", "updatedAt")
+              INSERT INTO "User" (id, name, email, "canvasToken", "userType", "createdAt", "updatedAt")
               VALUES (
                 ${userId}, 
                 ${userProfile.name || "Canvas User"}, 
                 ${userEmail}, 
                 ${apiKey}, 
+                'canvas',
                 ${new Date().toISOString()}, 
                 ${new Date().toISOString()}
               )
@@ -73,6 +100,7 @@ export const authOptions = {
               SET 
                 name = ${userProfile.name || "Canvas User"}, 
                 "canvasToken" = ${apiKey}, 
+                "userType" = 'canvas',
                 "updatedAt" = ${new Date().toISOString()}
               WHERE id = ${userId}
             `;
@@ -84,23 +112,29 @@ export const authOptions = {
             email: userEmail,
             image: userProfile.avatar_url,
             canvasToken: apiKey,
+            userType: "canvas",
           };
         } catch (error) {
           console.error("Authentication error:", error);
           return null;
         }
-      },
+      }
     }),
   ],
   pages: {
     signIn: "/login",
     error: "/login",
   },
+  session: {
+    strategy: "jwt" as SessionStrategy,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   callbacks: {
     async jwt({ token, user }: { token: any; user?: any }) {
       if (user) {
         token.id = user.id;
         token.apiKey = user.canvasToken;
+        token.userType = user.userType;
       }
       return token;
     },
@@ -108,6 +142,7 @@ export const authOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.apiKey = token.apiKey as string;
+        session.userType = token.userType as string;
       }
       return session;
     },

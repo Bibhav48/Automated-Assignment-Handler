@@ -19,13 +19,29 @@ import { useGSAP } from "@gsap/react";
 
 export function AssignmentList() {
   const [searchTerm, setSearchTerm] = useState("");
-
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [refreshTimeout, setRefreshTimeout] = useState<NodeJS.Timeout | null>(
     null
   );
+
+  const fetchAssignments = async () => {
+    try {
+      const response = await fetch("/api/assignments");
+      if (!response.ok) {
+        setIsError(true);
+        return;
+      }
+      const data = await response.json();
+      setAssignments(data);
+    } catch (error) {
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const onRefresh = () => {
     setIsLoading(true);
     if (refreshTimeout) {
@@ -36,41 +52,25 @@ export function AssignmentList() {
         setIsLoading(false);
       }, 1000)
     );
+    fetchAssignments();
   };
 
   useGSAP(() => {
     if (assignments.length > 0) {
       const tl = gsap.timeline({
-        defaults: { ease: "power2.out" }
+        defaults: { ease: "power2.out" },
       });
 
       tl.from(".assignment-item", {
         y: 30,
         opacity: 0,
         duration: 0.4,
-        stagger: 0.1
+        stagger: 0.1,
       });
     }
   }, [assignments]);
 
-  // fetch assignments from the database using api
   useEffect(() => {
-    const fetchAssignments = async () => {
-      try {
-        const response = await fetch("/api/assignments");
-        if (!response.ok) {
-          setIsError(true);
-          return;
-        }
-        const data = await response.json();
-        setAssignments(data);
-      } catch (error) {
-        setIsError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchAssignments();
   }, []);
 
@@ -110,39 +110,24 @@ export function AssignmentList() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <CardTitle>Assignments</CardTitle>
-            <CardDescription>
-              View and manage your Canvas assignments
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative w-full md:w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search assignments..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={onRefresh}
-              disabled={isLoading}
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
-              />
-              <span className="sr-only">Refresh</span>
-            </Button>
-          </div>
-        </div>
+        <CardTitle>Assignments</CardTitle>
+        <CardDescription>Your current assignments</CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="flex items-center space-x-2 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search assignments..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+          <Button variant="outline" size="icon" onClick={onRefresh}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
         {isLoading ? (
           <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -164,31 +149,27 @@ export function AssignmentList() {
             {filteredAssignments.map((assignment) => (
               <div
                 key={assignment.id}
-                className="assignment-item flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-lg border p-4"
+                className="assignment-item p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
               >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium">{assignment.title}</h3>
-                    <Badge
-                      variant="secondary"
-                      className={`bg-blue-200 cursor-pointer text-blue-500 hover:bg-blue-300 hover:text-blue-600`}
-                    >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold">{assignment.title}</h3>
+                    <p className="text-sm text-muted-foreground">
                       {assignment.courseName}
-                    </Badge>
-                    <Badge
-                      variant="secondary"
-                      className={`${getStatusColor(
-                        assignment.status
-                      )} text-white cursor-pointer hover:${getStatusColor(
-                        assignment.status
-                      )}/80`}
-                    >
-                      {assignment.status.charAt(0).toUpperCase() +
-                        assignment.status.slice(1)}
-                    </Badge>
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Due: {formatDate(assignment.dueDate)}
+                  <Badge
+                    className={`${getStatusColor(
+                      assignment.status
+                    )} text-white`}
+                  >
+                    {assignment.status}
+                  </Badge>
+                </div>
+                <div className="mt-2 text-sm">
+                  <p>Due: {formatDate(assignment.dueDate)}</p>
+                  <p className="text-muted-foreground line-clamp-2">
+                    {assignment.description}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

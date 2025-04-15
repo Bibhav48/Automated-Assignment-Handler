@@ -25,27 +25,10 @@ export async function processAssignments(submit?: boolean) {
       `Fetched ${incompleteAssignments.length} incomplete assignments`
     );
 
-    // Create a scheduled run record
-    const runId = uuidv4();
-    await sql`
-      INSERT INTO "ScheduledRun" (id, status, "startTime")
-      VALUES (${runId}, 'running', ${new Date().toISOString()})
-    `;
-
     // Process each assignment
     for (const assignment of incompleteAssignments) {
       await processAssignment(assignment, submit);
     }
-
-    // Update the scheduled run record
-    await sql`
-      UPDATE "ScheduledRun"
-      SET status = 'completed', "endTime" = ${new Date().toISOString()}, 
-          results = ${JSON.stringify({
-            processedCount: incompleteAssignments.length,
-          })}
-      WHERE id = ${runId}
-    `;
 
     // Log completion
     await logEvent(
@@ -147,32 +130,20 @@ async function processAssignment(assignment: Assignment, submit?: boolean) {
     );
 
     // Use Gemini to complete the assignment
-    if (assignment.description.length < 200) {
-      console.log("Description is too short, skipping assignment.");
-      console.log(assignment.description);
-      return;
-    }
-    const completedContent = await geminiClient.completeAssignment(assignment);
+    const response = await geminiClient.completeAssignment(assignment);
 
-    // Submit the completed assignment to Canvas
     if (submit) {
-      await submitAssignmentToCanvas(
-        assignment.courseId,
-        assignment.id,
-        completedContent
-      );
-      await logEvent(
-        "assignment_completed",
-        `Successfully completed assignment: ${assignment.title}`,
-        assignment.id
-      );
-    } else {
-      await logEvent(
-        "assignment_generated",
-        `Successfully generated solution: ${assignment.title}`,
-        assignment.id
-      );
+      // Submit the completed assignment to Canvas
+      await canvasApi.submitAssignment(assignment.courseId, assignment.id, response);
     }
+
+    await logEvent(
+      "assignment_completed",
+      `Successfully completed assignment: ${assignment.title}`,
+      assignment.id
+    );
+
+    return response;
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
@@ -181,44 +152,6 @@ async function processAssignment(assignment: Assignment, submit?: boolean) {
       `Error processing assignment ${assignment.title}: ${errorMessage}`,
       assignment.id
     );
-  }
-}
-
-async function submitAssignmentToCanvas(
-  courseId: string,
-  assignmentId: string,
-  content: string
-) {
-  console.log(`Submitting ${assignmentId} to Canvas`);
-  console.log(`Content: ${content}`);
-  try {
-    const apiUrl = process.env.CANVAS_API_URL;
-    const apiKey = process.env.NOT_CANVAS_API_KEY;
-
-    const response = await fetch(
-      `${apiUrl}/courses/${courseId}/assignments/${assignmentId}/submissions`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          submission: {
-            submission_type: "online_text_entry",
-            body: content,
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Canvas API error: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error submitting assignment:", error);
     throw error;
   }
 }
@@ -227,8 +160,6 @@ async function logEvent(type: string, message: string, assignmentId?: string) {
   const id = uuidv4();
   await sql`
     INSERT INTO "Log" (id, type, message, "assignmentId", timestamp)
-    VALUES (${id}, ${type}, ${message}, ${
-    assignmentId || null
-  }, ${new Date().toISOString()})
+    VALUES (${id}, ${type}, ${message}, ${assignmentId || null}, ${new Date().toISOString()})
   `;
 }

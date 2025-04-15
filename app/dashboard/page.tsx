@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { RecentLogs } from "@/components/recent-logs"
 import { ManualRun } from "@/components/manual-run"
+import { Schedule } from "@/components/schedule"
 import { neon } from "@neondatabase/serverless"
 
 // Initialize the database client
@@ -11,8 +12,7 @@ export default async function DashboardPage() {
   const [assignmentStats] = await sql`
     SELECT 
       (SELECT COUNT(*) FROM "Log" WHERE type = 'assignment_completed') as completed_count,
-      (SELECT COUNT(*) FROM "Log" WHERE type = 'assignment_error') as error_count,
-      (SELECT COUNT(*) FROM "ScheduledRun") as runs_count
+      (SELECT COUNT(*) FROM "Log" WHERE type = 'assignment_error') as error_count
   `
 
   return (
@@ -43,7 +43,8 @@ export default async function DashboardPage() {
         <ManualRun />
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Schedule />
         <RecentLogs />
       </div>
     </div>
