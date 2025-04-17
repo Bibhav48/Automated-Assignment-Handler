@@ -48,9 +48,6 @@ export async function fetchIncompleteAssignments(): Promise<Assignment[]> {
       }
 
       const assignments = await assignmentsResponse.json();
-      for (const item of assignments) {
-        console.log(item);
-      }
 
       return assignments.map((item: any) => ({
         id: item.id,

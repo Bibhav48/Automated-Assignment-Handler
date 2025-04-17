@@ -24,10 +24,6 @@ export async function GET() {
         due_date: assignment.dueDate?.toISOString(),
         points_possible: assignment.points
       }))
-      // log the schedule items
-      for (const item of schedule) {
-        console.log(item)
-      }
 
     return NextResponse.json(schedule)
   } catch (error) {

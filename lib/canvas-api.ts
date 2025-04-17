@@ -11,7 +11,6 @@ export class CanvasApiClient {
 
   private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
     const url = `${this.apiUrl}${endpoint}`;
-    console.log(this.apiKey);
     const headers = {
       Authorization: `Bearer ${this.apiKey}`,
       "Content-Type": "application/json",
@@ -64,9 +63,6 @@ export class CanvasApiClient {
 
   async getAllAssignments(): Promise<Assignment[]> {
     const courses = await this.getCourses();
-    for (const course of courses) {
-      console.log(course.course_code);
-    }
     const assignmentPromises = courses.map((course: any) =>
       this.getAssignments(course.id, course.course_code)
     );

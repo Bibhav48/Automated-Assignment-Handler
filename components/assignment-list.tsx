@@ -242,6 +242,14 @@ export function AssignmentList() {
                         <ExternalLink className="ml-1 h-3 w-3" />
                       </a>
                     </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <a
+                        href={`/assignment-editor/${assignment.id}`}
+                        className="inline-flex items-center"
+                      >
+                        Open in Editor
+                      </a>
+                    </Button>
                   </div>
                 </div>
               ))}

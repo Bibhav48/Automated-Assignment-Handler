@@ -21,7 +21,6 @@ export function Schedule() {
       try {
         const response = await fetch("/api/schedule")
         const data = await response.json()
-        console.log(data)
         setSchedule(data)
       } catch (error) {
         console.error("Error fetching schedule:", error)
