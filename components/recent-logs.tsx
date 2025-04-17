@@ -11,9 +11,10 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw, ArrowRight } from "lucide-react";
+import { RefreshCw, ArrowRight, AlertCircle } from "lucide-react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Log {
   id: string;
@@ -26,6 +27,28 @@ interface Log {
 export function RecentLogs() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchLogs = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch("/api/logs?limit=5");
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch logs");
+      }
+
+      const data = await response.json();
+      setLogs(data.logs);
+    } catch (err) {
+      console.error("Error fetching logs:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch logs");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useGSAP(() => {
     if (logs.length > 0) {
@@ -46,24 +69,6 @@ export function RecentLogs() {
     fetchLogs();
   }, []);
 
-  const fetchLogs = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/logs?limit=5");
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch logs");
-      }
-
-      const data = await response.json();
-      setLogs(data.logs);
-    } catch (error) {
-      console.error("Error fetching logs:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString("en-US", {
       year: "numeric",
@@ -75,12 +80,31 @@ export function RecentLogs() {
   };
 
   const getLogTypeColor = (type: string) => {
-    if (type.includes("error")) return "text-red-500";
-    if (type.includes("complete")) return "text-green-500";
-    if (type.includes("processing")) return "text-blue-500";
-    if (type.includes("start")) return "text-purple-500";
-    return "text-gray-500";
+    switch (type) {
+      case "assignment_completed":
+        return "text-green-700 dark:text-green-300";
+      case "assignment_error":
+        return "text-red-700 dark:text-red-300";
+      case "process_start":
+        return "text-purple-700 dark:text-purple-300";
+      case "process_complete":
+        return "text-green-700 dark:text-green-300";
+      case "assignment_processing":
+        return "text-blue-700 dark:text-blue-300";
+      default:
+        return "text-gray-700 dark:text-gray-300";
+    }
   };
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <Card>
@@ -110,7 +134,7 @@ export function RecentLogs() {
       <CardContent>
         {isLoading ? (
           <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
+            {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="space-y-2">
                 <Skeleton className="h-4 w-[200px]" />
                 <Skeleton className="h-4 w-full" />
@@ -118,8 +142,8 @@ export function RecentLogs() {
             ))}
           </div>
         ) : logs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-6 text-center">
-            <p className="text-muted-foreground">No logs found</p>
+          <div className="text-center text-muted-foreground py-4">
+            No recent activity
           </div>
         ) : (
           <div className="space-y-4">

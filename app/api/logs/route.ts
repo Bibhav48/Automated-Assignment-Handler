@@ -21,7 +21,13 @@ export async function GET(req: NextRequest) {
 
     // Get logs with pagination for the current user
     const logs = await sql`
-      SELECT * FROM "Log"
+      SELECT 
+        id,
+        type,
+        message,
+        "assignmentId",
+        "timestamp"
+      FROM "Log"
       WHERE "userId" = ${session.user.id}
       ORDER BY "timestamp" DESC
       LIMIT ${limit} OFFSET ${skip}
@@ -46,6 +52,9 @@ export async function GET(req: NextRequest) {
     })
   } catch (error) {
     console.error("Get logs error:", error)
-    return NextResponse.json({ error: "Failed to fetch logs" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to fetch logs", details: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    )
   }
 }

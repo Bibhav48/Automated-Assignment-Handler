@@ -47,21 +47,12 @@ export function ManualRun() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Next Scheduled Run</CardTitle>
-        <CardDescription>Automated completion schedule</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <Clock className="h-5 w-5 text-muted-foreground" />
-          <span>Today at 8:00 PM</span>
-        </div>
+    <>
         <div className="flex gap-2 mt-2">
           <Button
             onClick={runScheduler}
             disabled={isRunning}
-            className="flex-1"
+            className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white"
           >
             {isRunning ? (
               <>
@@ -76,7 +67,6 @@ export function ManualRun() {
             )}
           </Button>
         </div>
-      </CardContent>
-    </Card>
+    </>
   );
 }
