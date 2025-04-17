@@ -1,18 +1,25 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { RecentLogs } from "@/components/recent-logs"
 import { ManualRun } from "@/components/manual-run"
+import { Schedule } from "@/components/schedule"
 import { neon } from "@neondatabase/serverless"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 
 // Initialize the database client
 const sql = neon(process.env.DATABASE_URL!)
 
 export default async function DashboardPage() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return <div>Please sign in to view your dashboard</div>
+  }
+
   // Get counts from database
   const [assignmentStats] = await sql`
     SELECT 
-      (SELECT COUNT(*) FROM "Log" WHERE type = 'assignment_completed') as completed_count,
-      (SELECT COUNT(*) FROM "Log" WHERE type = 'assignment_error') as error_count,
-      (SELECT COUNT(*) FROM "ScheduledRun") as runs_count
+      (SELECT COUNT(*) FROM "Log" WHERE type = 'assignment_completed' AND "userId" = ${session.user.id}) as completed_count,
+      (SELECT COUNT(*) FROM "Log" WHERE type = 'assignment_error' AND "userId" = ${session.user.id}) as error_count
   `
 
   return (
@@ -43,7 +50,8 @@ export default async function DashboardPage() {
         <ManualRun />
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Schedule />
         <RecentLogs />
       </div>
     </div>

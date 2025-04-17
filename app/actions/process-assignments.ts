@@ -4,6 +4,8 @@ import { neon } from "@neondatabase/serverless";
 import { v4 as uuidv4 } from "uuid";
 import { GeminiClient } from "@/lib/gemini-sdk";
 import type { Assignment } from "@/types/assignment";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // Initialize the database client
 const sql = neon(process.env.DATABASE_URL!);
@@ -11,6 +13,11 @@ const geminiClient = new GeminiClient();
 
 export async function processAssignments(submit?: boolean) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.apiKey) {
+      throw new Error("No Canvas token found in session");
+    }
+
     // Log the start of the process
     await logEvent(
       "process_start",
@@ -18,34 +25,17 @@ export async function processAssignments(submit?: boolean) {
     );
 
     // Get incomplete assignments from Canvas
-    const incompleteAssignments = await fetchIncompleteAssignments();
+    const incompleteAssignments = await fetchIncompleteAssignments(session.apiKey);
 
     await logEvent(
       "assignments_fetched",
       `Fetched ${incompleteAssignments.length} incomplete assignments`
     );
 
-    // Create a scheduled run record
-    const runId = uuidv4();
-    await sql`
-      INSERT INTO "ScheduledRun" (id, status, "startTime")
-      VALUES (${runId}, 'running', ${new Date().toISOString()})
-    `;
-
     // Process each assignment
     for (const assignment of incompleteAssignments) {
-      await processAssignment(assignment, submit);
+      await processAssignment(assignment, submit, session.apiKey);
     }
-
-    // Update the scheduled run record
-    await sql`
-      UPDATE "ScheduledRun"
-      SET status = 'completed', "endTime" = ${new Date().toISOString()}, 
-          results = ${JSON.stringify({
-            processedCount: incompleteAssignments.length,
-          })}
-      WHERE id = ${runId}
-    `;
 
     // Log completion
     await logEvent(
@@ -72,11 +62,10 @@ export async function processAssignments(submit?: boolean) {
   }
 }
 
-async function fetchIncompleteAssignments(): Promise<Assignment[]> {
+async function fetchIncompleteAssignments(apiKey: string): Promise<Assignment[]> {
   try {
-    // Canvas API URL and key from environment variables
+    // Canvas API URL from environment variables
     const apiUrl = process.env.CANVAS_API_URL;
-    const apiKey = process.env.NOT_CANVAS_API_KEY;
 
     // Fetch courses
     const coursesResponse = await fetch(
@@ -138,7 +127,7 @@ async function fetchIncompleteAssignments(): Promise<Assignment[]> {
   }
 }
 
-async function processAssignment(assignment: Assignment, submit?: boolean) {
+async function processAssignment(assignment: Assignment, submit?: boolean, apiKey?: string) {
   try {
     await logEvent(
       "assignment_processing",
@@ -149,26 +138,28 @@ async function processAssignment(assignment: Assignment, submit?: boolean) {
     // Use Gemini to complete the assignment
     if (assignment.description.length < 200) {
       console.log("Description is too short, skipping assignment.");
-      console.log(assignment.description);
+      
       return;
     }
     const completedContent = await geminiClient.completeAssignment(assignment);
 
     // Submit the completed assignment to Canvas
-    if (submit) {
+    if (submit && apiKey) {
       await submitAssignmentToCanvas(
         assignment.courseId,
         assignment.id,
-        completedContent
+        completedContent,
+        apiKey
       );
       await logEvent(
-        "assignment_completed",
+        "assignment_submitted",
         `Successfully completed assignment: ${assignment.title}`,
         assignment.id
       );
     } else {
+      console.log("Not submitting assignment but generating solution");
       await logEvent(
-        "assignment_generated",
+        "assignment_completed",
         `Successfully generated solution: ${assignment.title}`,
         assignment.id
       );
@@ -187,13 +178,13 @@ async function processAssignment(assignment: Assignment, submit?: boolean) {
 async function submitAssignmentToCanvas(
   courseId: string,
   assignmentId: string,
-  content: string
+  content: string,
+  apiKey: string
 ) {
   console.log(`Submitting ${assignmentId} to Canvas`);
   console.log(`Content: ${content}`);
   try {
     const apiUrl = process.env.CANVAS_API_URL;
-    const apiKey = process.env.NOT_CANVAS_API_KEY;
 
     const response = await fetch(
       `${apiUrl}/courses/${courseId}/assignments/${assignmentId}/submissions`,
@@ -224,11 +215,10 @@ async function submitAssignmentToCanvas(
 }
 
 async function logEvent(type: string, message: string, assignmentId?: string) {
+  const session = await getServerSession(authOptions);
   const id = uuidv4();
   await sql`
-    INSERT INTO "Log" (id, type, message, "assignmentId", timestamp)
-    VALUES (${id}, ${type}, ${message}, ${
-    assignmentId || null
-  }, ${new Date().toISOString()})
+    INSERT INTO "Log" (id, type, message, "assignmentId", "userId", timestamp)
+    VALUES (${id}, ${type}, ${message}, ${assignmentId || null}, ${session.user.id}, ${new Date().toISOString()})
   `;
 }

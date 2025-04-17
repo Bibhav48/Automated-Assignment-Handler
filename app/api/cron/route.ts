@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server";
 import { processAssignments } from "@/app/actions/process-assignments";
-import { neon } from "@neondatabase/serverless";
-
-// Initialize the database client
-const sql = neon(process.env.DATABASE_URL!);
 
 // This route is meant to be called by a cron job service like Vercel Cron
 export async function GET() {

@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { scheduler } from "@/lib/scheduler"
-import { prisma } from "@/lib/prisma"
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,26 +10,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Create a scheduled run record
-    const scheduledRun = await prisma.scheduledRun.create({
-      data: {
-        status: "running",
-        startTime: new Date(),
-      },
-    })
-
     // Run the assignment completion process
     const result = await scheduler.runAssignmentCompletion()
-
-    // Update the scheduled run record
-    await prisma.scheduledRun.update({
-      where: { id: scheduledRun.id },
-      data: {
-        status: result.success ? "completed" : "failed",
-        endTime: new Date(),
-        results: result,
-      },
-    })
 
     return NextResponse.json(result)
   } catch (error) {

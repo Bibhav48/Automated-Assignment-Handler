@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { neon } from "@neondatabase/serverless";
+import { SessionStrategy } from "next-auth";
 
 // Initialize the database client
 const sql = neon(process.env.DATABASE_URL!);
@@ -89,12 +90,16 @@ export const authOptions = {
           console.error("Authentication error:", error);
           return null;
         }
-      },
+      }
     }),
   ],
   pages: {
     signIn: "/login",
     error: "/login",
+  },
+  session: {
+    strategy: "jwt" as SessionStrategy,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     async jwt({ token, user }: { token: any; user?: any }) {

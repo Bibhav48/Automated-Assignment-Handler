@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, ArrowRight } from "lucide-react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 
@@ -27,14 +28,18 @@ export function RecentLogs() {
   const [isLoading, setIsLoading] = useState(true);
 
   useGSAP(() => {
-    gsap.from(".log-item", {
-      y: 10,
-      opacity: 0,
-      stagger: 0.03,
-      duration: 0.3,
-      ease: "power2.out",
-      delay: 0.1,
-    });
+    if (logs.length > 0) {
+      const tl = gsap.timeline({
+        defaults: { ease: "power2.out" }
+      });
+
+      tl.from(".log-item", {
+        y: 30,
+        opacity: 0,
+        duration: 0.4,
+        stagger: 0.1
+      });
+    }
   }, [logs]);
 
   useEffect(() => {
@@ -44,7 +49,7 @@ export function RecentLogs() {
   const fetchLogs = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/logs?limit=7");
+      const response = await fetch("/api/logs?limit=5");
 
       if (!response.ok) {
         throw new Error("Failed to fetch logs");
@@ -81,7 +86,15 @@ export function RecentLogs() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
-          <CardTitle>Recent Activity</CardTitle>
+          <div className="flex items-center gap-4">
+            <CardTitle>Recent Activity</CardTitle>
+            <Link href="/dashboard/logs">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                View All
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
           <CardDescription>Latest system logs</CardDescription>
         </div>
         <Button

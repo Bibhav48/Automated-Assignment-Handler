@@ -1,7 +1,11 @@
 import { canvasApi } from "./canvas-api"
 import { geminiClient } from "./gemini-sdk"
-import { prisma } from "./prisma"
+import { neon } from "@neondatabase/serverless"
 import type { Assignment } from "@/types/assignment"
+import { v4 as uuidv4 } from "uuid"
+
+// Initialize the database client
+const sql = neon(process.env.DATABASE_URL!)
 
 export class SchedulerService {
   async runAssignmentCompletion() {
@@ -41,35 +45,25 @@ export class SchedulerService {
       await this.logEvent("assignment_processing", `Processing assignment: ${assignment.title}`, assignment.id)
 
       // Use Gemini to complete the assignment
-      const completedContent = await geminiClient.completeAssignment(assignment)
+      const response = await geminiClient.completeAssignment(assignment)
 
-      // Submit the completed assignment to Canvas
-      await canvasApi.submitAssignment(assignment.courseId, assignment.id, completedContent)
+      // Log completion
+      await this.logEvent("assignment_completed", `Successfully completed assignment: ${assignment.title}`, assignment.id)
 
-      await this.logEvent(
-        "assignment_completed",
-        `Successfully completed assignment: ${assignment.title}`,
-        assignment.id,
-      )
+      return response
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error"
-      await this.logEvent(
-        "assignment_error",
-        `Error processing assignment ${assignment.title}: ${errorMessage}`,
-        assignment.id,
-      )
+      await this.logEvent("assignment_error", `Error processing assignment ${assignment.title}: ${errorMessage}`, assignment.id)
+      throw error
     }
   }
 
   private async logEvent(type: string, message: string, assignmentId?: string) {
-    await prisma.log.create({
-      data: {
-        type,
-        message,
-        assignmentId,
-        timestamp: new Date(),
-      },
-    })
+    const id = uuidv4()
+    await sql`
+      INSERT INTO "Log" (id, type, message, "assignmentId", timestamp)
+      VALUES (${id}, ${type}, ${message}, ${assignmentId || null}, ${new Date().toISOString()})
+    `
   }
 }
 
