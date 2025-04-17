@@ -215,9 +215,10 @@ async function submitAssignmentToCanvas(
 }
 
 async function logEvent(type: string, message: string, assignmentId?: string) {
+  const session = await getServerSession(authOptions);
   const id = uuidv4();
   await sql`
-    INSERT INTO "Log" (id, type, message, "assignmentId", timestamp)
-    VALUES (${id}, ${type}, ${message}, ${assignmentId || null}, ${new Date().toISOString()})
+    INSERT INTO "Log" (id, type, message, "assignmentId", "userId", timestamp)
+    VALUES (${id}, ${type}, ${message}, ${assignmentId || null}, ${session.user.id}, ${new Date().toISOString()})
   `;
 }
