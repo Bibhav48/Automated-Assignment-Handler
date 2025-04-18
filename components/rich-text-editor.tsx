@@ -1,10 +1,12 @@
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
-import Image from '@tiptap/extension-image';
-import TextAlign from '@tiptap/extension-text-align';
-import Underline from '@tiptap/extension-underline';
-import { Button } from './ui/button';
+import React, { useEffect, useMemo, useState } from 'react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import LinkExtension from '@tiptap/extension-link'
+import ImageExtension from '@tiptap/extension-image'
+import TextAlign from '@tiptap/extension-text-align'
+import Underline from '@tiptap/extension-underline'
+import MarkdownIt from 'markdown-it'
+import { Button } from './ui/button'
 import {
   Bold,
   Italic,
@@ -17,39 +19,45 @@ import {
   Heading1,
   Heading2,
   Link as LinkIcon,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-interface RichTextEditorProps {
-  content: string;
-  onChange: (content: string) => void;
-  editable?: boolean;
-  placeholder?: string;
+interface MarkdownRichTextEditorProps {
+  /** Markdown in */
+  content: string
+  /** HTML out (you can post‑process to MD if you like) */
+  onChange: (html: string) => void
+  editable?: boolean
+  placeholder?: string
 }
 
 export function RichTextEditor({
   content,
   onChange,
   editable = true,
-  placeholder = 'Start writing...',
-}: RichTextEditorProps) {
+  placeholder = 'Start writing…',
+}: MarkdownRichTextEditorProps) {
+  // 1) markdown-it parser
+  const md = useMemo(() => new MarkdownIt({ html: true }), [])
+  content= content.replace(/^```markdown\s*|\s*```$/g, '').trim()
+
+  // 2) turn MD → HTML whenever content changes
+  const [htmlContent, setHtmlContent] = useState<string>(() => md.render(content))
+  useEffect(() => {
+    setHtmlContent(md.render(content))
+  }, [content, md])
+
+  // 3) initialize TipTap with that HTML
   const editor = useEditor({
+    editable,
     extensions: [
       StarterKit,
-      Link.configure({
-        openOnClick: false,
-      }),
-      Image,
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
+      LinkExtension.configure({ openOnClick: false }),
+      ImageExtension,
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Underline,
     ],
-    content,
-    editable,
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
-    },
+    content: htmlContent,   // load HTML
     editorProps: {
       attributes: {
         class: cn(
@@ -59,33 +67,37 @@ export function RichTextEditor({
         placeholder,
       },
     },
-  });
+    onUpdate: ({ editor }) => {
+      // 4) emit HTML whenever the doc changes
+      onChange(editor.getHTML())
+    },
+  })
 
-  if (!editor) {
-    return null;
+  // 5) if parent MD changes, re‑set the editor’s content
+  useEffect(() => {
+    if (!editor) return
+    const current = editor.getHTML()
+    if (current !== htmlContent) {
+      editor.commands.setContent(htmlContent)
+    }
+  }, [htmlContent, editor])
+
+  if (!editor) return null
+
+  // toolbar helpers
+  const toggleLink = () => {
+    const prev = editor.getAttributes('link').href
+    const url = window.prompt('URL', prev)
+    if (url == null) return
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run()
+    } else {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+    }
   }
 
-  const toggleLink = () => {
-    const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('URL', previousUrl);
-
-    if (url === null) {
-      return;
-    }
-
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run();
-      return;
-    }
-
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  };
-
   return (
-    <div className={cn(
-      "border rounded-lg overflow-hidden",
-      !editable && "bg-muted border-muted"
-    )}>
+    <div className={cn('border rounded-lg overflow-hidden', !editable && 'bg-muted border-muted')}>
       {editable && (
         <div className="border-b p-2 flex flex-wrap gap-1 bg-background">
           <Button
@@ -180,5 +192,5 @@ export function RichTextEditor({
       )}
       <EditorContent editor={editor} className="min-h-[100px]" />
     </div>
-  );
-} 
+  )
+}
