@@ -58,7 +58,7 @@
 
 | Layer        | Tech                                                  |
 |--------------|--------------------------------------------------------|
-| **Frontend** | Next.js 14, Tailwind CSS, shadcn/ui, GSAP             |
+| **Frontend** | Next.js 15, Tailwind CSS, shadcn/ui, GSAP             |
 | **Backend**  | Next.js API Routes, Server Actions                    |
 | **AI**       | Google Gemini API SDK                                 |
 | **Database** | Neon Serverless Postgres                              |
@@ -88,7 +88,6 @@ This project promotes responsible and ethical AI use in education. It is designe
 
 ```bash
 git clone https://github.com/yourusername/automated-assignments.git
-cd automated-assignments
 bun install
 bun run dev
 ```
