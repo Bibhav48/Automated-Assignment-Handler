@@ -8,6 +8,9 @@ import { RichTextEditor } from "@/components/rich-text-editor";
 import { Assignment } from "@/types/assignment";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { DashboardNav } from "@/components/dashboard-nav";
+import { User } from "next-auth";
 
 // Helper function to strip HTML tags
 function stripHtml(html: string) {
@@ -19,6 +22,7 @@ export default function AssignmentEditorPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const { data: session } = useSession();
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [description, setDescription] = useState("");
   const [userPrompt, setUserPrompt] = useState("");
@@ -122,55 +126,67 @@ export default function AssignmentEditorPage() {
     return null;
   }
 
+  if (!session) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto p-6 space-y-6 max-w-5xl">
-      <Card className="p-6">
-        <h1 className="text-2xl font-bold mb-4">{assignment.title}</h1>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Assignment Description</label>
-            <RichTextEditor
-              content={description}
-              onChange={setDescription}
-              editable={false}
-            />
-          </div>
+    <div className="flex min-h-screen flex-col">
+        <DashboardNav user={session.user as User} />
           
-          <div>
-            <label className="block text-sm font-medium mb-2">Your Requirements</label>
-            <RichTextEditor
-              content={userPrompt}
-              onChange={setUserPrompt}
-              placeholder="Enter any specific requirements or questions..."
-            />
-          </div>
+        <div className="container mx-auto p-6 space-y-6 max-w-5xl">
+          <Card className="p-6">
+            <h1 className="text-2xl font-bold mb-4">{assignment.title}</h1>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Assignment Description</label>
+                <RichTextEditor
+                  content={description}
+                  onChange={setDescription}
+                  editable={false}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Your Requirements</label>
+                <RichTextEditor
+                  content={userPrompt}
+                  onChange={setUserPrompt}
+                  placeholder="Enter any specific requirements or questions..."
+                />
+              </div>
 
-          <Button 
-            onClick={handleSubmit} 
-            disabled={isLoading}
-            className="w-full"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              "Generate Response"
-            )}
-          </Button>
+              <Button 
+                onClick={handleSubmit} 
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  "Generate Response"
+                )}
+              </Button>
+            </div>
+          </Card>
+
+          {response && (
+            <Card className="p-6">
+              <h2 className="text-xl font-bold mb-4">Generated Response</h2>
+              <RichTextEditor
+                content={response}
+                onChange={setResponse}
+              />
+            </Card>
+          )}
         </div>
-      </Card>
-
-      {response && (
-        <Card className="p-6">
-          <h2 className="text-xl font-bold mb-4">Generated Response</h2>
-          <RichTextEditor
-            content={response}
-            onChange={setResponse}
-          />
-        </Card>
-      )}
-    </div>
+      </div>
   );
-} 
+}
