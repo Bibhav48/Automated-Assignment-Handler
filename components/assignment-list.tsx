@@ -244,7 +244,7 @@ export function AssignmentList() {
                     </Button>
                     <Button variant="outline" size="sm" asChild>
                       <a
-                        href={`/assignment-editor/${assignment.id}`}
+                        href={`/assignments/editor/${assignment.id}`}
                         className="inline-flex items-center"
                       >
                         Open in Editor
