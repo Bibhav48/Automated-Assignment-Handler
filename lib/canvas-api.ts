@@ -5,8 +5,9 @@ export class CanvasApiClient {
   private apiKey: string;
 
   constructor(apiKey?: string) {
+    // Use your actual Canvas API URL and key
     this.apiUrl = process.env.CANVAS_API_URL || "";
-    this.apiKey = apiKey || "";
+    this.apiKey = apiKey || process.env.DEMO_CANVAS_API_KEY || "";
   }
 
   private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
@@ -127,22 +128,29 @@ export class CanvasApiClient {
     );
   }
 
-  // async submitAssignment(
-  //   courseId: string,
-  //   assignmentId: string,
-  //   content: string
-  // ) {
-  //   return this.fetchWithAuth(
-  //     `/courses/${courseId}/assignments/${assignmentId}/submissions`,
-  //     {
-  //       method: "POST",
-  //       body: JSON.stringify({
-  //         submission: {
-  //           submission_type: "online_text_entry",
-  //           body: content,
-  //         },
-  //       }),
-  //     }
-  //   );
-  // }
+  // Mock submit function that always returns success
+  async submitAssignment(
+    courseId: string,
+    assignmentId: string,
+    content: string
+  ) {
+    console.log(`[SIMULATION] Mock submission for assignment ${assignmentId} in course ${courseId}`);
+    console.log(`[SIMULATION] Content length: ${content.length} characters`);
+    
+    // Return a mock success response
+    return {
+      id: Date.now(),
+      assignment_id: assignmentId,
+      user_id: "current_user",
+      submission_type: "online_text_entry",
+      body: content,
+      grade: null,
+      score: null,
+      submitted_at: new Date().toISOString(),
+      url: null,
+      submission_history: [],
+      attachments: [],
+      preview_url: null,
+    };
+  }
 }

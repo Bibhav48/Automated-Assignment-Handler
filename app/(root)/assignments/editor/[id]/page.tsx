@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   useParams,
   useRouter,
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useSession } from "next-auth/react";
 import Input from "@/components/ai-input";
+import confetti from "canvas-confetti";
 
 // Helper function to strip HTML tags
 function stripHtml(html: string) {
@@ -189,7 +190,7 @@ export default function AssignmentEditorPage() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/process-assignments", {
+      const res = await fetch("/api/submit-assignment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -198,7 +199,6 @@ export default function AssignmentEditorPage() {
           assignmentId: assignment.id,
           courseId: assignment.courseId,
           content: response,
-          submit: true,
         }),
       });
 
@@ -207,9 +207,38 @@ export default function AssignmentEditorPage() {
         throw new Error(data.error || "Failed to submit assignment");
       }
 
+      // Trigger confetti animation
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+      function randomInRange(min: number, max: number) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval: any = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+        });
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+        });
+      }, 250);
+
       toast({
         title: "Success",
-        description: "Assignment submitted successfully",
+        description: "Assignment submitted successfully (simulated)",
       });
     } catch (error) {
       console.error("Failed to submit assignment:", error);

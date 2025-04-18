@@ -23,6 +23,7 @@ export default function LoginPage() {
   const { status } = useSession()
   const searchParams = useSearchParams()
   const error = searchParams.get("error")
+  const [isGuestLogin, setIsGuestLogin] = useState(false)
 
   useEffect(() => {
     // If user is already authenticated, redirect to dashboard
@@ -54,8 +55,11 @@ export default function LoginPage() {
     // Reset previous errors
     setApiKeyError(null)
     
+    // For guest login, use the demo API key
+    const finalApiKey = isGuestLogin ? process.env.NEXT_PUBLIC_DEMO_CANVAS_API_KEY : apiKey
+    
     // Validate API key format (simple validation)
-    if (apiKey.length < 8) {
+    if (!isGuestLogin && apiKey.length < 8) {
       setApiKeyError("API key seems too short. Please check and try again.")
       return
     }
@@ -64,7 +68,7 @@ export default function LoginPage() {
 
     try {
       const result = await signIn("credentials", {
-        apiKey,
+        apiKey: finalApiKey,
         redirect: false,
       })
 
@@ -88,6 +92,53 @@ export default function LoginPage() {
       setApiKeyError(errorMsg)
       toast({
         title: "An error occurred",
+        description: errorMsg,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleGuestLogin = async () => {
+    setIsLoading(true)
+    setIsGuestLogin(true)
+    setApiKeyError(null)
+
+    try {
+      const response = await fetch('/api/auth/guest-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Guest login failed')
+      }
+
+      // Sign in with the user data from the API
+      const result = await signIn("credentials", {
+        apiKey: data.user.canvasToken,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        throw new Error(result.error)
+      }
+
+      toast({
+        title: "Guest login successful",
+        description: "Welcome to the Automated Assignment Handler!",
+      })
+      router.push("/dashboard")
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "An unexpected error occurred. Please try again later."
+      setApiKeyError(errorMsg)
+      toast({
+        title: "Authentication failed",
         description: errorMsg,
         variant: "destructive",
       })
@@ -143,6 +194,8 @@ export default function LoginPage() {
                     setApiKey(e.target.value)
                     // Clear error when user types
                     if (apiKeyError) setApiKeyError(null)
+                    // Disable guest login if user enters their own API key
+                    if (e.target.value) setIsGuestLogin(false)
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -151,7 +204,8 @@ export default function LoginPage() {
                     }
                   }}
                   className={apiKeyError ? "border-red-500 focus-visible:ring-red-500" : ""}
-                  required
+                  required={!isGuestLogin}
+                  disabled={isGuestLogin}
                 />
                 {apiKeyError && (
                   <div className="flex items-center gap-2 text-red-500 text-sm mt-1">
@@ -160,9 +214,20 @@ export default function LoginPage() {
                   </div>
                 )}
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
-              </Button>
+              <div className="grid gap-2">
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Logging in..." : "Login"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleGuestLogin}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Logging in..." : "Guest Login"}
+                </Button>
+              </div>
             </div>
           </form>
         </CardContent>

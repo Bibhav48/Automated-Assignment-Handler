@@ -3,6 +3,7 @@
 import { neon } from "@neondatabase/serverless";
 import { v4 as uuidv4 } from "uuid";
 import { GeminiClient } from "@/lib/gemini-sdk";
+import { CanvasApiClient } from "@/lib/canvas-api";
 import type { Assignment } from "@/types/assignment";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -10,6 +11,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 // Initialize the database client
 const sql = neon(process.env.DATABASE_URL!);
 const geminiClient = new GeminiClient();
+const canvasClient = new CanvasApiClient();
 
 export async function processAssignments(submit?: boolean) {
   try {
@@ -138,24 +140,27 @@ async function processAssignment(assignment: Assignment, submit?: boolean, apiKe
     // Use Gemini to complete the assignment
     if (assignment.description.length < 200) {
       console.log("Description is too short, skipping assignment.");
-      
       return;
     }
     const completedContent = await geminiClient.completeAssignment(assignment);
 
-    // Submit the completed assignment to Canvas
-    if (submit && apiKey) {
-      await submitAssignmentToCanvas(
+    // Simulate submission to Canvas
+    if (submit) {
+      const submission = await canvasClient.submitAssignment(
         assignment.courseId,
         assignment.id,
-        completedContent,
-        apiKey
+        completedContent
       );
+      
       await logEvent(
         "assignment_submitted",
-        `Successfully completed assignment: ${assignment.title}`,
+        `Successfully simulated submission for assignment: ${assignment.title}`,
         assignment.id
       );
+      
+      console.log(`[SIMULATION] Successfully simulated submission for assignment ${assignment.id}`);
+      console.log(`[SIMULATION] Course: ${assignment.courseId}`);
+      console.log(`[SIMULATION] Content length: ${completedContent.length} characters`);
     } else {
       console.log("Not submitting assignment but generating solution");
       await logEvent(
@@ -172,45 +177,6 @@ async function processAssignment(assignment: Assignment, submit?: boolean, apiKe
       `Error processing assignment ${assignment.title}: ${errorMessage}`,
       assignment.id
     );
-  }
-}
-
-async function submitAssignmentToCanvas(
-  courseId: string,
-  assignmentId: string,
-  content: string,
-  apiKey: string
-) {
-  console.log(`Submitting ${assignmentId} to Canvas`);
-  console.log(`Content: ${content}`);
-  try {
-    const apiUrl = process.env.CANVAS_API_URL;
-
-    const response = await fetch(
-      `${apiUrl}/courses/${courseId}/assignments/${assignmentId}/submissions`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          submission: {
-            submission_type: "online_text_entry",
-            body: content,
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Canvas API error: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error submitting assignment:", error);
-    throw error;
   }
 }
 

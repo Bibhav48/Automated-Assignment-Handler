@@ -53,7 +53,7 @@ export function RichTextEditor({
     editorProps: {
       attributes: {
         class: cn(
-          'prose prose-sm sm:prose lg:prose-lg max-w-none focus:outline-none min-h-[100px] px-4 py-2',
+          'prose prose-sm sm:prose lg:prose-lg max-w-none focus:outline-none min-h-[100px] px-4 py-2 leading-relaxed',
           !editable && 'bg-muted cursor-default'
         ),
         placeholder,
@@ -178,7 +178,7 @@ export function RichTextEditor({
           </Button>
         </div>
       )}
-      <EditorContent editor={editor} className="min-h-[100px]" />
+      <EditorContent editor={editor} className="min-h-[100px] leading-relaxed" />
     </div>
   );
 } 

@@ -9,4 +9,4 @@ Please provide a comprehensive response that:
 1. Directly complete the assignment requirements
 2. Incorporates the user's specific needs
 3. Is well-structured and academically appropriate
-5. Is formatted in Markdown
+5. Must be formatted in Markdown
