@@ -7,7 +7,7 @@ Built with ❤️ for the [Next.js Hackathon](https://vercel.com/challenges/next
 
 ## 🚀 Overview
 
-**Automated Assignments** is a powerful full-stack web application designed to help students automate, organize, and complete their assignments directly from Canvas LMS. Using AI-driven workflows, rich UI components, and real-time integrations, the app transforms the academic workload into a smarter, faster, and more efficient experience.
+**Instant Assignments** is a powerful full-stack web application designed to help students automate, organize, and complete their assignments directly from Canvas LMS. Using AI-driven workflows, rich UI components, and real-time integrations, the app transforms the academic workload into a smarter, faster, and more efficient experience.
 
 ---
 
