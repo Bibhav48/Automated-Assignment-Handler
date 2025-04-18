@@ -57,7 +57,6 @@ export default function AssignmentEditorPage() {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue = "";
       }
     };
 

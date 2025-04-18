@@ -30,14 +30,14 @@ export function RecentLogs() {
   useGSAP(() => {
     if (logs.length > 0) {
       const tl = gsap.timeline({
-        defaults: { ease: "power2.out" }
+        defaults: { ease: "power2.out" },
       });
 
       tl.from(".log-item", {
         y: 30,
         opacity: 0,
         duration: 0.4,
-        stagger: 0.1
+        stagger: 0.1,
       });
     }
   }, [logs]);
@@ -88,8 +88,12 @@ export function RecentLogs() {
         <div>
           <div className="flex items-center gap-4">
             <CardTitle>Recent Activity</CardTitle>
-            <Link href="/dashboard/logs">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+            <Link href="/logs">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground"
+              >
                 View All
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

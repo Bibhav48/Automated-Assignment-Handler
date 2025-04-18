@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { signOut } from "next-auth/react"
-import type { User } from "next-auth"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
+import type { User } from "next-auth";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,19 +13,27 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { BookOpen, Calendar, ClipboardList, Home, LogOut, Settings, UserIcon } from "lucide-react"
-import { gsap } from "gsap"
-import { useGSAP } from "@gsap/react"
-import { cn } from "@/lib/utils"
-import { ThemeToggle } from "@/components/theme-toggle"
+} from "@/components/ui/dropdown-menu";
+import {
+  BookOpen,
+  Calendar,
+  ClipboardList,
+  Home,
+  LogOut,
+  Settings,
+  UserIcon,
+} from "lucide-react";
+import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
+import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface DashboardNavProps {
-  user?: User
+  user?: User;
 }
 
 export function DashboardNav({ user }: DashboardNavProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   useGSAP(() => {
     gsap.from(".nav-item", {
@@ -34,8 +42,8 @@ export function DashboardNav({ user }: DashboardNavProps) {
       stagger: 0.1,
       duration: 0.5,
       ease: "power2.out",
-    })
-  }, [])
+    });
+  }, []);
 
   const navItems = [
     {
@@ -59,11 +67,16 @@ export function DashboardNav({ user }: DashboardNavProps) {
       icon: <Calendar className="h-5 w-5" />,
     },
     {
+      title: "Profile",
+      href: "/profile",
+      icon: <UserIcon className="h-5 w-5" />,
+    },
+    {
       title: "Settings",
       href: "/settings",
       icon: <Settings className="h-5 w-5" />,
     },
-  ]
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -100,9 +113,15 @@ export function DashboardNav({ user }: DashboardNavProps) {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button
+                    variant="ghost"
+                    className="relative h-8 w-8 rounded-full"
+                  >
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.image || ""} alt={user.name || ""} />
+                      <AvatarImage
+                        src={user.image || ""}
+                        alt={user.name || ""}
+                      />
                       <AvatarFallback>
                         {user.name
                           ? user.name
@@ -117,13 +136,17 @@ export function DashboardNav({ user }: DashboardNavProps) {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.name}</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                      <p className="text-sm font-medium leading-none">
+                        {user.name}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard/profile">
+                    <Link href="/profile">
                       <UserIcon className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </Link>
@@ -153,5 +176,5 @@ export function DashboardNav({ user }: DashboardNavProps) {
         </div>
       </div>
     </header>
-  )
+  );
 }
