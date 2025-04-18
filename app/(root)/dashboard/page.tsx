@@ -25,30 +25,29 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold">Dashboard</h1>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="transform transition duration-300 hover:scale-105 hover:shadow-lg">
+            <CardHeader>
+              <CardTitle>Completed Assignments</CardTitle>
+              <CardDescription>Successfully processed</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold">{assignmentStats?.completed_count || 0}</div>
+            </CardContent>
+          </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Completed Assignments</CardTitle>
-            <CardDescription>Successfully processed</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold">{assignmentStats?.completed_count || 0}</div>
-          </CardContent>
-        </Card>
+          <Card className="transform transition duration-300 hover:scale-105 hover:shadow-lg">
+            <CardHeader>
+              <CardTitle>Failed Assignments</CardTitle>
+              <CardDescription>Errors during processing</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold">{assignmentStats?.error_count || 0}</div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Failed Assignments</CardTitle>
-            <CardDescription>Errors during processing</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold">{assignmentStats?.error_count || 0}</div>
-          </CardContent>
-        </Card>
-
-        <ManualRun />
-      </div>
+          <ManualRun />
+        </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Schedule />

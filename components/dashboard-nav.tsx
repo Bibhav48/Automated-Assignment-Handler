@@ -45,22 +45,22 @@ export function DashboardNav({ user }: DashboardNavProps) {
     },
     {
       title: "Assignments",
-      href: "/dashboard/assignments",
+      href: "/assignments",
       icon: <ClipboardList className="h-5 w-5" />,
     },
     {
       title: "Courses",
-      href: "/dashboard/courses",
+      href: "/courses",
       icon: <BookOpen className="h-5 w-5" />,
     },
     {
       title: "Schedule",
-      href: "/dashboard/schedule",
+      href: "/schedule",
       icon: <Calendar className="h-5 w-5" />,
     },
     {
       title: "Settings",
-      href: "/dashboard/settings",
+      href: "/settings",
       icon: <Settings className="h-5 w-5" />,
     },
   ]

@@ -8,6 +8,8 @@ import { RichTextEditor } from "@/components/rich-text-editor";
 import { Assignment } from "@/types/assignment";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import Input from "@/components/ai-input";
 
 // Helper function to strip HTML tags
 function stripHtml(html: string) {
@@ -19,6 +21,7 @@ export default function AssignmentEditorPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const { data: session } = useSession();
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [description, setDescription] = useState("");
   const [userPrompt, setUserPrompt] = useState("");
@@ -122,6 +125,14 @@ export default function AssignmentEditorPage() {
     return null;
   }
 
+  if (!session) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6 max-w-5xl">
       <Card className="p-6">
@@ -138,13 +149,13 @@ export default function AssignmentEditorPage() {
           
           <div>
             <label className="block text-sm font-medium mb-2">Your Requirements</label>
-            <RichTextEditor
-              content={userPrompt}
+              <Input
+              value={userPrompt}
               onChange={setUserPrompt}
-              placeholder="Enter any specific requirements or questions..."
-            />
+              onSubmit={handleSubmit}
+              />
           </div>
-
+          
           <Button 
             onClick={handleSubmit} 
             disabled={isLoading}
@@ -173,4 +184,4 @@ export default function AssignmentEditorPage() {
       )}
     </div>
   );
-} 
+}

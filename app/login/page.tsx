@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { signIn, useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -11,10 +10,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { gsap } from "gsap"
+import Disclaimer from "@/components/disclaimer"
+import { AlertCircle } from "lucide-react"
+import Link from "next/link"
 
 export default function LoginPage() {
   const [apiKey, setApiKey] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
   const { status } = useSession()
@@ -33,6 +36,7 @@ export default function LoginPage() {
 
       if (error === "CredentialsSignin") {
         errorMessage = "Invalid Canvas API key. Please check and try again."
+        setApiKeyError(errorMessage)
       }
 
       toast({
@@ -41,18 +45,21 @@ export default function LoginPage() {
         variant: "destructive",
       })
     }
-
-    // Animation
-    gsap.from(".login-card", {
-      y: 50,
-      opacity: 0,
-      duration: 0.8,
-      ease: "power3.out",
-    })
   }, [error, router, status, toast])
 
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Reset previous errors
+    setApiKeyError(null)
+    
+    // Validate API key format (simple validation)
+    if (apiKey.length < 8) {
+      setApiKeyError("API key seems too short. Please check and try again.")
+      return
+    }
+    
     setIsLoading(true)
 
     try {
@@ -62,9 +69,11 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
+        const errorMsg = "Invalid Canvas API key. Please check and try again."
+        setApiKeyError(errorMsg)
         toast({
           title: "Authentication failed",
-          description: "Please check your Canvas API key and try again.",
+          description: errorMsg,
           variant: "destructive",
         })
       } else {
@@ -75,9 +84,11 @@ export default function LoginPage() {
         router.push("/dashboard")
       }
     } catch (error) {
+      const errorMsg = "An unexpected error occurred. Please try again later."
+      setApiKeyError(errorMsg)
       toast({
         title: "An error occurred",
-        description: "Please try again later.",
+        description: errorMsg,
         variant: "destructive",
       })
     } finally {
@@ -89,10 +100,34 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800">
       <Card className="w-full max-w-md login-card">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Automated Assignment Handler</CardTitle>
-          <CardDescription className="text-center">
-            Enter your Canvas API key to access your assignments
+          <p className="flex items-center justify-center mb-1">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="24" 
+              height="24" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              className="lucide lucide-notebook-pen text-white"
+            >
+              <path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/>
+              <path d="M2 6h4"/>
+              <path d="M2 10h4"/>
+              <path d="M2 14h4"/>
+              <path d="M2 18h4"/>
+              <path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/>
+            </svg>
+          </p>
+          <CardTitle className="text-2xl font-bold text-center mb-1">Instant Assignments</CardTitle>
+          <CardDescription className="text-center flex flex-col items-center justify-center text-sm text-muted-foreground">
+            <p className="mb-4">
+            Automate your Assignments - Homeworks? No more!
+            </p>
           </CardDescription>
+          <Disclaimer />
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
@@ -104,9 +139,26 @@ export default function LoginPage() {
                   type="password"
                   placeholder="Enter your Canvas API key"
                   value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
+                  onChange={(e) => {
+                    setApiKey(e.target.value)
+                    // Clear error when user types
+                    if (apiKeyError) setApiKeyError(null)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleSubmit(e)
+                    }
+                  }}
+                  className={apiKeyError ? "border-red-500 focus-visible:ring-red-500" : ""}
                   required
                 />
+                {apiKeyError && (
+                  <div className="flex items-center gap-2 text-red-500 text-sm mt-1">
+                    <AlertCircle size={16} />
+                    <span>{apiKeyError}</span>
+                  </div>
+                )}
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Logging in..." : "Login"}
@@ -116,7 +168,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col">
           <p className="text-sm text-muted-foreground text-center mt-2">
-            Don&apos;t have an API key? You can generate one in your Canvas account settings.
+            Don&apos;t have an API key? You can generate one in your <Link href="https://www.instructure.com/canvas/login" className="text-blue-600">Canvas account</Link> settings.
           </p>
         </CardFooter>
       </Card>
