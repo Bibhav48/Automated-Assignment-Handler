@@ -100,7 +100,13 @@ export function LogsList() {
             <CardTitle>Activity Logs</CardTitle>
             <CardDescription>System activity and assignment processing logs</CardDescription>
           </div>
-          <Button variant="outline" size="icon" onClick={fetchLogs} disabled={isLoading}>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={fetchLogs} 
+            disabled={isLoading}
+            className="transition-all hover:scale-[1.01]"
+          >
             <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
             <span className="sr-only">Refresh</span>
           </Button>
@@ -124,7 +130,10 @@ export function LogsList() {
           <>
             <div className="space-y-4">
               {logs.map((log) => (
-                <div key={log.id} className="log-item space-y-1 border-b pb-3 last:border-0">
+                <div 
+                  key={log.id} 
+                  className="log-item space-y-1 border-b pb-3 last:border-0 transition-all hover:scale-[1.01] hover:bg-accent/50 rounded-lg p-3"
+                >
                   <div className="flex justify-between">
                     <span className={`text-sm font-medium ${getLogTypeColor(log.type)}`}>
                       {log.type.replace(/_/g, " ").toUpperCase()}
@@ -146,6 +155,7 @@ export function LogsList() {
                   size="sm"
                   onClick={() => setPagination({ ...pagination, current: pagination.current - 1 })}
                   disabled={pagination.current === 1 || isLoading}
+                  className="transition-all hover:scale-[1.01]"
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Previous
@@ -158,6 +168,7 @@ export function LogsList() {
                   size="sm"
                   onClick={() => setPagination({ ...pagination, current: pagination.current + 1 })}
                   disabled={pagination.current === pagination.pages || isLoading}
+                  className="transition-all hover:scale-[1.01]"
                 >
                   Next
                   <ChevronRight className="h-4 w-4 ml-1" />

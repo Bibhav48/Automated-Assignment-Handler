@@ -47,26 +47,24 @@ export function ManualRun() {
   };
 
   return (
-    <>
-        <div className="flex gap-2 mt-2">
-          <Button
-            onClick={runScheduler}
-            disabled={isRunning}
-            className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white"
-          >
-            {isRunning ? (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                Running...
-              </>
-            ) : (
-              <>
-                <Play className="mr-2 h-4 w-4" />
-                Run Now
-              </>
-            )}
-          </Button>
-        </div>
-    </>
+    <div className="flex gap-2 mt-2">
+      <Button
+        onClick={runScheduler}
+        disabled={isRunning}
+        className="shadow-xl transition-all hover:scale-[1.03] flex-1 bg-purple-100/50 hover:bg-purple-200/50 dark:bg-purple-300/10 dark:hover:bg-purple-300/20 text-purple-800 dark:text-purple-100 border border-purple-200 dark:border-purple-400/20"
+      >
+        {isRunning ? (
+          <>
+            <RefreshCw className="mr-2 h-4 w-4 animate-spin text-purple-800 dark:text-purple-100" />
+            Running...
+          </>
+        ) : (
+          <>
+            <Play className="mr-2 h-4 w-4 text-purple-800 dark:text-purple-100" />
+            Run Now
+          </>
+        )}
+      </Button>
+    </div>
   );
 }

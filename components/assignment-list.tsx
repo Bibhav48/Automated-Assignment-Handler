@@ -210,7 +210,7 @@ export function AssignmentList() {
               {currentAssignments.map((assignment) => (
                 <div
                   key={assignment.id}
-                  className="assignment-item p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
+                  className="assignment-item p-4 rounded-lg border bg-card text-card-foreground shadow-sm transition-all hover:scale-[1.01]"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -231,7 +231,7 @@ export function AssignmentList() {
                     />
                   </div>
                   <div className="flex items-center gap-2 mt-2">
-                    <Button variant="outline" size="sm" asChild>
+                    <Button variant="outline" size="sm" asChild className="transition-all hover:scale-[1.01]">
                       <a
                         href={assignment.url}
                         target="_blank"
@@ -242,7 +242,7 @@ export function AssignmentList() {
                         <ExternalLink className="ml-1 h-3 w-3" />
                       </a>
                     </Button>
-                    <Button variant="outline" size="sm" asChild>
+                    <Button variant="outline" size="sm" asChild className="transition-all hover:scale-[1.01]">
                       <a
                         href={`/assignment-editor/${assignment.id}`}
                         className="inline-flex items-center"
@@ -262,6 +262,7 @@ export function AssignmentList() {
                   size="sm"
                   onClick={() => setCurrentPage(prev => prev - 1)}
                   disabled={currentPage === 1 || isLoading}
+                  className="transition-all hover:scale-[1.01]"
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Previous
@@ -274,6 +275,7 @@ export function AssignmentList() {
                   size="sm"
                   onClick={() => setCurrentPage(prev => prev + 1)}
                   disabled={currentPage === totalPages || isLoading}
+                  className="transition-all hover:scale-[1.01]"
                 >
                   Next
                   <ChevronRight className="h-4 w-4 ml-1" />
