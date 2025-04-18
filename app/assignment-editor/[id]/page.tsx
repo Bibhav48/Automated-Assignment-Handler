@@ -28,6 +28,8 @@ function stripHtml(html: string) {
 export default function AssignmentEditorPage() {
   const params = useParams();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [description, setDescription] = useState("");
@@ -41,7 +43,7 @@ export default function AssignmentEditorPage() {
   const [showLeaveWarning, setShowLeaveWarning] = useState(false);
   const [intendedPath, setIntendedPath] = useState<string | null>(null);
 
-  // Add beforeunload event listener
+  // Add beforeunload event listener for browser/tab close
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
@@ -54,16 +56,15 @@ export default function AssignmentEditorPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // Replace the router events useEffect with this:
-  useEffect(() => {
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
-    
+  // Handle navigation attempts
+  const handleNavigate = (url: string) => {
     if (hasUnsavedChanges) {
-      setIntendedPath(pathname + searchParams.toString());
+      setIntendedPath(url);
       setShowLeaveWarning(true);
+    } else {
+      router.push(url);
     }
-  }, [hasUnsavedChanges]);
+  };
 
   // Update hasUnsavedChanges when response changes
   useEffect(() => {
@@ -86,15 +87,28 @@ export default function AssignmentEditorPage() {
 
       try {
         setIsFetching(true);
-        const res = await fetch(`/api/assignments/${params.id}`);
-        if (!res.ok) {
-          const data = await res.json();
+        const [assignmentRes, savedResponseRes] = await Promise.all([
+          fetch(`/api/assignments/${params.id}`),
+          fetch(`/api/save-response?assignmentId=${params.id}`)
+        ]);
+
+        if (!assignmentRes.ok) {
+          const data = await assignmentRes.json();
           throw new Error(data.error || 'Failed to fetch assignment');
         }
 
-        const data = await res.json();
-        setAssignment(data);
-        setDescription(data.description || '');
+        const assignmentData = await assignmentRes.json();
+        setAssignment(assignmentData);
+        setDescription(assignmentData.description || '');
+
+        // Load saved response if it exists
+        if (savedResponseRes.ok) {
+          const { content } = await savedResponseRes.json();
+          if (content) {
+            setResponse(content);
+            setHasUnsavedChanges(false); // No unsaved changes since we just loaded the saved version
+          }
+        }
       } catch (error) {
         console.error("Failed to fetch assignment:", error);
         toast({
@@ -346,9 +360,11 @@ export default function AssignmentEditorPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Stay</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setShowLeaveWarning(false)}>Stay</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
+                setHasUnsavedChanges(false);
+                setShowLeaveWarning(false);
                 if (intendedPath) {
                   router.push(intendedPath);
                 }
