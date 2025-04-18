@@ -25,6 +25,7 @@ export default function AssignmentEditorPage() {
   const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchAssignment = async () => {
@@ -110,6 +111,45 @@ export default function AssignmentEditorPage() {
     }
   };
 
+  const handleSubmitToCanvas = async () => {
+    if (!assignment || !response) return;
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/process-assignments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assignmentId: assignment.id,
+          courseId: assignment.courseId,
+          content: response,
+          submit: true,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to submit assignment');
+      }
+
+      toast({
+        title: "Success",
+        description: "Assignment submitted successfully",
+      });
+    } catch (error) {
+      console.error("Failed to submit assignment:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to submit assignment",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (isFetching) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -145,20 +185,39 @@ export default function AssignmentEditorPage() {
             />
           </div>
 
-          <Button 
-            onClick={handleSubmit} 
-            disabled={isLoading}
-            className="w-full"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              "Generate Response"
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleSubmit} 
+              disabled={isLoading}
+              className="flex-1"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                "Generate Response"
+              )}
+            </Button>
+            {response && (
+              <Button
+                onClick={handleSubmitToCanvas}
+                disabled={isSubmitting}
+                className="flex-1"
+                variant="secondary"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit to Canvas"
+                )}
+              </Button>
             )}
-          </Button>
+          </div>
         </div>
       </Card>
 

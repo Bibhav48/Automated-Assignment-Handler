@@ -38,7 +38,8 @@ export function RichTextEditor({
   placeholder = 'Start writing…',
 }: MarkdownRichTextEditorProps) {
   // 1) markdown-it parser
-  const md = useMemo(() => new MarkdownIt({ html: true }), [])
+  const md = useMemo(() => require('markdown-it')({ html: true }), []);
+
   content= content.replace(/^```markdown\s*|\s*```$/g, '').trim()
 
   // 2) turn MD → HTML whenever content changes
