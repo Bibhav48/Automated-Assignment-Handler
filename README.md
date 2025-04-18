@@ -1,8 +1,6 @@
 # 📝 Instant Assignments
 
 **Automate your Assignments - Homeworks? No more!**  
-Built with ❤️ for the [Next.js Hackathon](https://vercel.com/challenges/nextjs)
-
 ---
 
 ## 🚀 Overview
